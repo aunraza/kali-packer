@@ -1,0 +1,122 @@
+{
+  "variables": {
+    "vm_name": "kali-desktop",
+    "disk_size": "40960",
+    "iso_checksum": "5639928a1473b144d16d7ca3b9c71791925da23c",
+    "iso_checksum_type": "sha1",
+    "iso_url": "http://cdimage.kali.org/kali-2.0/kali-linux-mini-2.0-amd64.iso",
+    "box_name" : "kali-linux-2.0-amd64-desktop.box",
+    "box_desc" : "Kali Linux 2.0 64 Bit Desktop"
+  },
+  "description": "{{user `box_desc`}}",
+  "builders": [
+    {
+      "headless": false,
+      "type": "virtualbox-iso",
+      "virtualbox_version_file": ".vbox_version",
+      "guest_os_type": "Debian_64",
+      "vm_name": "{{user `vm_name`}}",
+      "iso_url": "{{user `iso_url`}}",
+      "iso_checksum": "{{user `iso_checksum`}}",
+      "iso_checksum_type": "{{user `iso_checksum_type`}}",
+      "disk_size": "{{user `disk_size`}}",
+      "vboxmanage": [
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--memory",
+          "1024"
+        ],
+        [
+          "modifyvm",
+          "{{.Name}}",
+          "--cpus",
+          "2"
+        ]
+      ],
+      "boot_command": [
+        "<esc><wait>",
+        "install preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed-desktop.cfg debian-installer=en_US auto locale=en_US kbd-chooser/method=us <wait>",
+        "netcfg/get_hostname={{ .Name }} netcfg/get_domain=vagrantup.com fb=false debconf/frontend=noninteractive console-setup/ask_detect=false <wait>",
+    "console-keymaps-at/keymap=us keyboard-configuration/xkb-keymap=us <wait>",
+        "<enter><wait>"
+      ],
+      "boot_wait": "10s",
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+      "http_directory": "http",
+      "shutdown_command": "echo 'vagrant' | sudo -S shutdown -h -P now",
+      "ssh_password": "vagrant",
+      "ssh_port": 22,
+      "ssh_username": "vagrant",
+      "ssh_wait_timeout": "10000s"
+    },
+    {
+      "type": "qemu",
+      "vm_name": "{{user `vm_name`}}",
+      "iso_url": "{{user `iso_url`}}",
+      "iso_checksum": "{{user `iso_checksum`}}",
+      "iso_checksum_type": "{{user `iso_checksum_type`}}",
+      "disk_size": "{{user `disk_size`}}",
+      "ssh_wait_timeout": "30s",
+      "shutdown_command": "echo 'vagrant' | sudo -S shutdown -h -P now",
+      "disk_size": "{{user `disk_size`}}",
+      "format": "qcow2",
+      "headless": false,
+      "accelerator": "kvm",
+      "http_directory": "http",
+      "ssh_username": "vagrant",
+      "ssh_password": "vagrant",
+      "net_device": "virtio-net",
+      "disk_interface": "virtio",
+      "boot_command": [
+        "<esc><wait>",
+        "install <wait>",
+        "preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed-desktop.cfg <wait>",
+        "debian-installer=en_US <wait>",
+        "auto <wait>",
+        "locale=en_US <wait>",
+        "kbd-chooser/method=us <wait>",
+        "netcfg/get_hostname={{ .Name }} <wait>",
+        "netcfg/get_domain=vagrantup.com <wait>",
+        "fb=false <wait>",
+        "debconf/frontend=noninteractive <wait>",
+        "console-setup/ask_detect=false <wait>",
+        "console-keymaps-at/keymap=us <wait>",
+        "keyboard-configuration/xkb-keymap=us <wait>",
+        "<enter><wait>"
+      ], "qemuargs": [
+           [ "-m", "1024m" ],
+           [ "--no-acpi", "" ]
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/kali/update.sh",
+        "scripts/common/sshd.sh",
+        "scripts/kali/networking.sh",
+        "scripts/kali/sudoers.sh",
+        "scripts/common/vagrant.sh",
+        "scripts/common/vmtools.sh",
+        "scripts/kali/cleanup.sh",
+        "scripts/common/minimize.sh"
+      ],
+      "pause_before": "10s",
+      "override": {
+        "virtualbox-iso": {
+          "execute_command": "echo 'vagrant' | {{.Vars}} sudo -S -E sh -eux '{{.Path}}'"
+        }
+      }
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "vagrant",
+      "output" : "builds/{{user `box_name`}}",
+      "only": ["virtualbox-iso"]
+
+    }
+  ]
+}
