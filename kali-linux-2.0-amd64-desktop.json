@@ -27,7 +27,7 @@
           "modifyvm",
           "{{.Name}}",
           "--memory",
-          "1024"
+          "4096"
         ],
         [
           "modifyvm",
@@ -44,6 +44,7 @@
         "<enter><wait>"
       ],
       "boot_wait": "5s",
+      "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
       "shutdown_command": "echo 'vagrant' | sudo -S shutdown -h -P now",
       "ssh_password": "vagrant",
       "ssh_port": 22,
